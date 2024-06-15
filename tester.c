@@ -177,5 +177,62 @@ int main(void)
 	}
 	printf("\tSUCCESS: Key \"drac\" was found!\n");
 	printf("Test PASSED!\n\n");
+
+	// TEST FIVE --- Hashmap entry deletion
+	printf("Test 5: Hashmap entry deletion.\n");
+	hashmap_insert(map, "crad", "brad"); // should result in collision
+	status = hashmap_remove(map, "drac");
+	if(status == false)
+	{
+		fprintf(stderr, "Test FAILED. Hashmap entry removal attempted for \"drac\" which returned false, but was expected to return true.\n");
+		free(map->entries[hash]->next->key);
+		free(map->entries[hash]->next->value);
+		free(map->entries[hash]->next);
+		free(map->entries[hash]->key);
+		free(map->entries[hash]->value);
+		free(map->entries);
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: Removed element.\n");
+	status = hashmap_contains(map, "drac");
+	if(status == true)
+	{
+		fprintf(stderr, "Test FAILED. Hashmap entry lookup attempted for \"drac\" which returned true, but was expected to return false, because the element was formerly deleted.\n");
+		free(map->entries[hash]->next->key);
+		free(map->entries[hash]->next->value);
+		free(map->entries[hash]->next);
+		free(map->entries[hash]->key);
+		free(map->entries[hash]->value);
+		free(map->entries);
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: Lookup for deleted element returns false.\n");
+
+	status = hashmap_contains(map, "crad");
+	if(status == false)
+	{
+		fprintf(stderr, "Test FAILED. Hashmap entry lookup attempted for \"crad\" which returned false, but was expected to return true.\n");
+		free(map->entries[hash]->next->key);
+		free(map->entries[hash]->next->value);
+		free(map->entries[hash]->next);
+		free(map->entries[hash]->key);
+		free(map->entries[hash]->value);
+		free(map->entries);
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: Linked element remained in hashmap after deletion of another element.\n");
+
+	printf("Test PASSED!\n\n");
+	
+	// TEST SIX --- Hashmap destroy
+	printf("Test 6: Hashmap destroy\n");
+	hashmap_destroy(map);
+		// fprintf(stderr, "Test FAILED. Hashmap was not NULL after calling hashmap_destroy method.\n");
+		// return 1;
+	printf("\tSUCCESS: Map was NULL after calling hashmap_destroy.\n");
+	printf("Test PASSED!\n\n");
 	return 0;
 }

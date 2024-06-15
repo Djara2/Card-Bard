@@ -117,3 +117,72 @@ bool hashmap_contains(struct hashmap *map, char *key)
 
 	return false;
 }
+
+bool hashmap_remove(struct hashmap *map, char *key)
+{
+	unsigned int index = hash_string(key);
+
+	// Case 1: index is unoccupied
+	if(map->entries[index] == NULL)
+		return false; // cannot remove something inexistent
+
+	// Case 2: index is already occupied --- do linear probing
+	// Linear probing
+	struct entry *current = map->entries[index];
+	struct entry *previous = NULL; 
+	while(current != NULL)
+	{
+		// Element found
+		if(strcmp(current->key, key) == 0)
+		{
+			// Update links 
+			// Case 1: If the first node in the chain is the one
+			//         to be deleted
+			if(previous == NULL)
+				map->entries[index] = current->next;
+
+			// Case 2: If the node is part of a series.
+			else
+				previous->next = current->next;
+
+			// Destroy current node
+			free(current->key);
+			free(current->value);
+			
+			free(current);
+
+			return true;
+		}
+
+		previous = current;
+		current = current->next; 
+	}
+
+	return false;
+}
+
+void hashmap_destroy(struct hashmap *map)
+{
+	// go through every single entry and clear them all if they are not NULL
+	// as well as all of the chaining
+	for(int i = 0; i < MODULUS; i++)
+	{
+		if(map->entries[i] == NULL)
+			continue;
+
+		// remove entire chain
+		struct entry *current = map->entries[i];
+		while(current != NULL)
+		{
+			free(current->key);
+			free(current->value);
+			struct entry *previous = current;
+			current = current->next;
+			free(previous);
+		}
+	}
+
+	free(map->entries);
+	free(map);
+	return;
+}

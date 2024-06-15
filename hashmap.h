@@ -29,4 +29,8 @@ bool hashmap_insert(struct hashmap *map, char *key, char *value);
 
 bool hashmap_contains(struct hashmap *map, char *key);
 
+bool hashmap_remove(struct hashmap *map, char *key);
+
+void hashmap_destroy(struct hashmap *map);
+
 #endif
