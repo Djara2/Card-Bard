@@ -93,3 +93,27 @@ bool hashmap_insert(struct hashmap *map, char *key, char *value)
 
 	return true;
 }
+
+bool hashmap_contains(struct hashmap *map, char *key)
+{
+	unsigned int index = hash_string(key);
+
+	// Case 1: index is unoccupied
+	if(map->entries[index] == NULL)
+		return false;
+
+	// Case 2: index is already occupied --- do linear probing
+	// Linear probing
+	struct entry *current = malloc(sizeof(struct entry*));
+	current = map->entries[index];
+	while(current != NULL)
+	{
+		// Subcase 1: The item has already been inserted --- stop probing
+		if(strcmp(current->key, key) == 0)
+			return true;
+
+		current = current->next; 
+	}
+
+	return false;
+}

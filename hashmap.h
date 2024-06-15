@@ -27,4 +27,6 @@ struct hashmap* hashmap_create();
 
 bool hashmap_insert(struct hashmap *map, char *key, char *value);
 
+bool hashmap_contains(struct hashmap *map, char *key);
+
 #endif
