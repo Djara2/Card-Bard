@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hashmap.h"
+#include <stdbool.h>
 
 unsigned int hash_string(char *input)
 {
@@ -30,4 +31,65 @@ struct entry* entry_create(char *key, char *value)
 	new_entry->next = NULL;
 
 	return new_entry;
+}
+
+// SUPPOSES THAT THERE IS NO LINEAR CHAINING
+void entry_destroy(struct entry *e)
+{
+	free(e->key);
+	free(e->value);
+	free(e);
+	return;
+}
+
+struct hashmap* hashmap_create()
+{
+	struct hashmap *new_hashmap = malloc(sizeof(struct hashmap));
+	if(new_hashmap == NULL)
+	{
+		fprintf(stderr, "Failed to allocate sufficient memory for a new hashmap.\n");
+		return NULL;
+	}
+
+	new_hashmap->entries = malloc(sizeof(struct entry*) * MODULUS);
+	if(new_hashmap->entries == NULL)
+	{
+		fprintf(stderr, "Failed to allocate sufficient memory for %d entry pointers when initializing the new hashmap's entries array. The hashmap's memory will be freed and NULL will be returned.\n", MODULUS);
+		free(new_hashmap);
+		return NULL;
+	}
+
+	new_hashmap->length = 0;
+
+	return new_hashmap;
+}
+
+bool hashmap_insert(struct hashmap *map, char *key, char *value)
+{
+	unsigned int index = hash_string(key);
+
+	// Case 1: index is unoccupied
+	if(map->entries[index] == NULL)
+	{
+		map->entries[index] = entry_create(key, value);
+		return true;
+	}
+	// Case 2: index is already occupied --- do linear probing
+	// Linear probing
+	struct entry *current = malloc(sizeof(struct entry*));
+	current = map->entries[index];
+	while(current->next != NULL)
+	{
+		// Subcase 1: The item has already been inserted --- stop probing
+		if(strcmp(current->key, key) == 0)
+			return false;
+
+		current = current->next; 
+	}
+
+	// Insert new entry and increase length
+	current->next = entry_create(key, value);
+	map->length++;
+
+	return true;
 }

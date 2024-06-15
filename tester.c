@@ -52,5 +52,48 @@ int main(void)
 	free(new_entry->value);
 	free(new_entry);
 
+	// TEST TWO --- HASHMAP CREATION AND INSERTION
+	struct hashmap *map = hashmap_create();	
+	printf("Test 2: Entry creation.\n");
+	if(map == NULL)
+	{
+		fprintf(stderr, "\tTest FAILED. Hashmap_create() returned NULL.\n");
+		return 1;
+	}
+	printf("\tSUCCESS: hashmap was not NULL.\n");
+	unsigned int hash = hash_string("card");
+	bool status;
+	status = hashmap_insert(map, "card", "bard");
+	if(status == false)
+	{
+		fprintf(stderr, "Test FAILED. False status returned for \"bool hashmap_insert(struct hashmap *map, char *key, char *value);\". The expected value was true.\n");
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: True return status for \"void entry_destroy(struct entry *e);\".\n");
+
+	if(strcmp(map->entries[hash]->key, "card") != 0)
+	{
+		fprintf(stderr, "Test FAILED. Inserted KEY does not match expected value.\n");
+		entry_destroy(map->entries[hash]); // okay to use entry_destroy() here, because there is no chaining after inserting just one entry.
+		free(map->entries);
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: Correct value \"%s\" was inserted to hashmap at index %u.\n", "card", hash);
+
+	if(strcmp(map->entries[hash]->value, "bard") != 0)
+	{
+		fprintf(stderr, "Test FAILED. Inserted VALUE does not match expected value for key \"%s\"\n", "card");
+		entry_destroy(map->entries[hash]); // okay to use entry_destroy() here, because there is no chaining after inserting just one entry.
+		free(map->entries);
+		free(map);
+		return 1;
+	}
+	printf("\tSUCCESS: Correct value \"%s\" was inserted to hashmap at index %u.\n", "card", hash);
+
+	printf("Test PASSED!.\n");
+	free(map);
+
 	return 0;
 }
