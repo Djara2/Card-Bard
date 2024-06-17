@@ -4,61 +4,59 @@
 #include <stdbool.h>
 #include "card.h"
 
-struct card_entry* card_entry_create(char *key, char *value)
+struct card* card_create(char *key, char *value)
 {
-	struct card_entry *new_card_entry = malloc(sizeof(struct card_entry));
-	if(new_card_entry == NULL)
+	struct card *new_card = malloc(sizeof(struct card));
+	if(new_card == NULL)
 	{
-		fprintf(stderr, "Failed to create new card_entry with key \"%s\" and value \"%s\".\n", key, value);
+		fprintf(stderr, "Failed to create new card with key \"%s\" and value \"%s\".\n", key, value);
 		return NULL;
 	}
 
-	new_card_entry->key = (char*) malloc(strlen(key) + 1);
-	new_card_entry->values = malloc(sizeof(char*) * 1);
-	new_card_entry->values[0] = (char*) malloc(strlen(value) + 1);
-	new_card_entry->values_length = 1;
+	new_card->key = (char*) malloc(strlen(key) + 1);
+	new_card->values = malloc(sizeof(char*) * 1);
+	new_card->values[0] = (char*) malloc(strlen(value) + 1);
+	new_card->values_length = 1;
 
-	strcpy(new_card_entry->key, key);
-	strcpy(new_card_entry->values[0], value);
+	strcpy(new_card->key, key);
+	strcpy(new_card->values[0], value);
 
-	new_card_entry->next = NULL;
-
-	return new_card_entry;
+	return new_card;
 }
 
-struct card_entry* card_entry_create_many_answers(char *key, char **values, unsigned char length)
+struct card* card_create_many_answers(char *key, char **values, unsigned char length)
 {
-	struct card_entry *new_card_entry = malloc(sizeof(struct card_entry));
-	if(new_card_entry == NULL)
+	struct card *new_card = malloc(sizeof(struct card));
+	if(new_card == NULL)
 	{
-		fprintf(stderr, "Failed to create new card_entry with key \"%s\" corresponding to %c values.\n", key, length);
+		fprintf(stderr, "Failed to create new card with key \"%s\" corresponding to %c values.\n", key, length);
 		return NULL;
 	}
 
-	new_card_entry->key = (char*) malloc(strlen(key) + 1);
-	new_card_entry->values = malloc(sizeof(char*) * length);
+	new_card->key = (char*) malloc(strlen(key) + 1);
+	new_card->values = malloc(sizeof(char*) * length);
 	for(unsigned char i = 0; i < length; i++)
 	{
-		new_card_entry->values[i] = (char*) malloc(strlen(values[i]) + 1);
-		strcpy(new_card_entry->values[i], values[i]);
+		new_card->values[i] = (char*) malloc(strlen(values[i]) + 1);
+		strcpy(new_card->values[i], values[i]);
 	}
 
-	new_card_entry->values_length = length;
-	strcpy(new_card_entry->key, key);
+	new_card->values_length = length;
+	strcpy(new_card->key, key);
 
-	new_card_entry->next = NULL;
-
-	return new_card_entry;
+	return new_card;
 }
 
-bool card_entry_add_value(struct card_entry *card, char *value)
+bool card_add_value(struct card *card, char *value)
 {
+	// Case 1: too many values
 	if(card->values_length >= 255)
 	{
 		fprintf(stderr, "Cannot add more elements to the values buffer of the card \"%s\". The length reached 255 values.\n", value);
 		return false;
 	}
 
+	// Add value
 	card->values = realloc(card->values, (card->values_length + 1) * sizeof(char*));
 	if(card->values == NULL)
 	{
@@ -66,10 +64,12 @@ bool card_entry_add_value(struct card_entry *card, char *value)
 		return false;
 	}
 
+	card->values[card->values_length] = malloc(sizeof(char) * (strlen(value) + 1));
+	strcpy(card->values[card->values_length], value);
+	return true;
 }
 
-// SUPPOSES THAT THERE IS NO LINEAR CHAINING
-void card_entry_destroy(struct card_entry *e)
+void card_destroy(struct card *e)
 {
 	free(e->key);
 	for(unsigned char i = 0; i < e->values_length; i++)
