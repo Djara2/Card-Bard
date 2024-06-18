@@ -11,13 +11,13 @@ struct card_set
 	struct card **cards;
 	unsigned short length;      // Probably will not need more than 32,000 cards.
 	unsigned short capacity; 
-}
+};
 
 // Creation methods
 struct card_set* card_set_create(char *name);
 
 // Modification methods
-bool card_set_add(struct card_set *set, struct card *c)
+bool card_set_add(struct card_set *set, struct card *c);
 
 bool card_set_remove_by_key(struct card_set *set, char *key);
 
