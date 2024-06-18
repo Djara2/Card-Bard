@@ -32,4 +32,7 @@ struct card_set* card_set_read_binary(char *file_name);
 
 struct card_set* card_set_read_csv(char *file_name);
 
+// Visual methods
+void card_set_print(struct card_set *set);
+
 #endif

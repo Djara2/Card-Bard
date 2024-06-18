@@ -12,7 +12,7 @@ struct card* card_create(char *key, char *value);
 
 struct card* card_create_many_answers(char *key, char **values, unsigned char length);
 
-bool card_add_values(struct card *card, char *value);
+bool card_add_value(struct card *card, char *value);
 
 void card_destroy(struct card *e);
 

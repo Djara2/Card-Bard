@@ -510,3 +510,26 @@ struct card_set* card_set_read_csv(char *file_name)
 {
 	return NULL;
 }
+
+// Visual methods
+void card_set_print(struct card_set *set)
+{
+	// Print card name
+	if(set->name == NULL)
+	{
+		fprintf(stderr, "Cannot print the name of a card set with no name (NULL pointer for name member).\n");
+		return;
+	}
+	printf("\"%s\":\n", set->name);
+
+	for(unsigned short i = 0; i < set->length; i++)
+	{
+		printf("\tCard #%hu: \"%s\"\n", i, set->cards[i]->key);
+		for(unsigned char j = 0; j < set->cards[i]->values_length; j++)
+			printf("\t\t-> \"%s\"\n", set->cards[i]->values[j]);
+
+		printf("\n\n");
+	}
+
+	return;
+}
