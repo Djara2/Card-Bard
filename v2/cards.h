@@ -22,6 +22,8 @@ void card_destroy(struct card *c);
 
 struct card* card_create(char *front, char *back, byte va_list_length, ...);
 
+bool card_validate_answer(struct card *c, char *answer);
+
 void card_print(struct card *c);
 
 void card_list_print(struct card **cards, unsigned short length);

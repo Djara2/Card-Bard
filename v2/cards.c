@@ -121,6 +121,38 @@ void card_print(struct card *c)
 	return;
 }
 
+bool card_validate_answer(struct card *c, char *answer)
+{
+	if(c == NULL)
+	{
+		fprintf(stderr, "Cannot validate an answer for a card that points to NULL.\n");
+		return false;
+	}
+
+	if(c->back == NULL)
+	{
+		fprintf(stderr, "Cannot validate an answer for a card that points to NULL.\n");
+		return false;
+	}
+
+	// Check back with answer
+	if(strcmp(c->back, answer) == 0)
+		return true;
+
+	// Are there alternate answers if the primary answer didn't match?
+	if(c->alternate_answers == NULL || c->alternate_answers_length <= 0)
+		return false;
+
+	// Check alternate answers
+	for(byte i = 0; i < c->alternate_answers_length; i++)
+	{
+		if(strcmp(c->alternate_answers[i], answer) == 0)
+			return true;
+	}
+
+	return false;
+}
+
 void card_list_print(struct card **cards, unsigned short length)
 {
 	if(cards == NULL)
