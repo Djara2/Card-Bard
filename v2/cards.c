@@ -94,6 +94,77 @@ struct card* card_create(char *front, char *back, byte va_list_length, ...)
 	return new_card;
 }
 
+// No va_list. Extra answers are passed as an array. Used in card_set_create_from_csv method.
+struct card* card_create_with_array(char **data, byte data_length)
+{
+	if(data_length < 2)
+	{
+		fprintf(stderr, "Cannot create a card from a data buffer with less than 2 members. A front and back side are the minimum requirements for a card.\n");
+		fprintf(stderr, "Data buffer contents were:");
+		for(int i = 0; i < data_length; i++)
+			printf("%d. %s\n", i, data[i]);
+
+		return NULL;
+	}
+
+	struct card *new_card = malloc(sizeof(struct card));
+	if(new_card == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory for a card struct. Function call was card_create(\"%s\", \"%s\", ...). Note that the variable arguments (va_list members) were not displayed here.\n", data[0], data[1]);
+		return NULL;
+	}
+
+	// Set up base members	
+	char *front = data[0];
+	char *back = data[1];
+
+	// Copy over the front member
+	new_card->front = malloc(sizeof(char) * (strlen(front) + 1));
+	if(new_card->front == NULL)
+	{ 
+		fprintf(stderr, "Failed to allocate memory for the front member of the card struct. Function call was Function call was card_create(\"%s\", \"%s\", ...). Note that the variable arguments (va_list members) were not displayed here.\n", front, back);
+		free(new_card); 
+		return NULL;
+	}
+	strcpy(new_card->front, front);
+
+	// Copy over the back member
+	new_card->back = malloc(sizeof(char) * (strlen(back) + 1));
+	if(new_card->back == NULL)
+	{ 
+		fprintf(stderr, "Failed to allocate memory for the back member of the card struct. Function call was Function call was card_create(\"%s\", \"%s\", ...). Note that the variable arguments (va_list members) were not displayed here.\n", front, back);
+		free(new_card->front);
+		free(new_card);
+		return NULL;
+	}
+	strcpy(new_card->back, back);
+
+	// Copy over each alternate answer
+	byte alternate_answers_length = data_length - 2;	// exclude front and back
+	new_card->alternate_answers_length = alternate_answers_length;
+	if(alternate_answers_length > 0)
+	{
+		new_card->alternate_answers = malloc(sizeof(char*) * alternate_answers_length);
+		for(int i = 2; i < data_length; i++)
+		{
+			unsigned short alternate_answer_length = strlen(data[i]);
+
+			// Allocate alternate answer
+			new_card->alternate_answers[i-2] = malloc(sizeof(char) * (alternate_answer_length + 1));
+			if(new_card->alternate_answers[i-2] == NULL)
+			{
+				fprintf(stderr, "Failed to allocate memory for alternate answer to prompt \"%s\".\n", front);
+				card_destroy(new_card);
+				return NULL;
+			}
+			strcpy(new_card->alternate_answers[i-2], data[i]);
+		}
+	}
+	else new_card->alternate_answers = NULL;
+
+	return new_card;
+}
+
 void card_print(struct card *c)
 {
 	if(c == NULL)
@@ -412,6 +483,254 @@ bool card_set_add_card(struct card_set *cs, struct card *c)
 	return true;
 }
 
+void get_tokens(char *str, char *delimiter, char ***tokens, byte *tokens_length, byte *tokens_capacity)
+{
+	char *token;
+	token = strtok(str, delimiter);
+	while(token != NULL)
+	{
+		// Ensure there is sufficient space
+		if( (*tokens_length) >= (*tokens_capacity) )
+		{
+			(*tokens_capacity) *= 2;
+			(*tokens) = realloc((*tokens), sizeof(char*) * (*tokens_capacity));
+			if( (*tokens) == NULL )
+			{
+				fprintf(stderr, "Failed to reallocate the tokens buffer to accomodate more tokens.\n");
+				return;
+			}
+		}
+
+		// Copy the token into the tokens buffer
+		(*tokens)[(*tokens_length)] = malloc(strlen(token) + 1);
+		strcpy( (*tokens)[(*tokens_length)], token );
+		(*tokens_length)++;
+
+		// Get next token
+		token = strtok(NULL, delimiter); 
+	}
+	return;
+}
+
+// Expects (1) the first line to be the name of the card set
+//     and (2) the second line to be the description.
+//     The rest of the file is a CSV of form front,back,alt ans 1,alt ans 2,...,alt ans n
+struct card_set* card_set_create_from_csv(char *file_name)
+{
+	// Open file
+	FILE *fh = fopen(file_name, "r");
+	if(fh == NULL)
+	{
+		fprintf(stderr, "Failed to open file \"%s\".\n", file_name);
+		return NULL;
+	}
+
+	// Create line buffer
+	char *line = malloc(256);
+	if(line == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory for the line buffer while reading contents of \"%s\".\n", file_name);
+		fclose(fh);
+		return NULL;
+	}
+	unsigned short line_length = 0;
+	unsigned short line_capacity = 256;
+
+	// Create tokens buffer for analyzing the line
+	char **tokens = malloc(sizeof(char*) * 5);		// There cannot be more than
+	byte tokens_length = 0;					// 256 tokens in a line
+	byte tokens_capacity = 5;
+	if(tokens == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory for the tokens buffer while reading the contents of \"%s\".\n", file_name);
+		free(line);
+		fclose(fh);
+		return NULL;
+	}
+
+	// Create card set struct
+	struct card_set *cs = malloc(sizeof(struct card_set));
+	if(cs == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory for the card_set struct while reading contents of \"%s\".\n", file_name); 
+		free(line); 
+		free(tokens);
+		fclose(fh);
+		return NULL;
+	}
+
+	// Begin reading first 2 lines for name of set and des
+	char c = 1;
+	unsigned short line_number = 0; 
+	while(c != EOF)
+	{
+		c = fgetc(fh);
+
+		// Stop reading the line and update name or description member
+		if(c == '\n' || c == EOF)
+		{
+			// Cut off the line
+			line[line_length] = '\0';
+			line_length++;
+
+			// Set name or description member
+			if(line_number == 0)
+			{
+				// Allocate the name buffer
+				cs->name = malloc(strlen(line) + 1);
+				if(cs->name == NULL)
+				{
+					fprintf(stderr, "Failed to allocate memory for the name buffer of the card set while reading the contents of \"%s\".\n", file_name);
+					free(cs);
+					free(line);
+					free(tokens);
+					fclose(fh);
+					return NULL;
+				}
+
+				// Copy the name buffer data
+				strcpy(cs->name, line);
+
+				// Reset line data for the next line
+				line_length = 0;
+				line_number++;
+			}
+			else
+			{
+				// Allocate the description buffer
+				cs->description = malloc(strlen(line) + 1);
+				if(cs->description == NULL)
+				{
+					fprintf(stderr, "Failed to allocate memory for the description buffer of the card set while reading the contents of \"%s\".\n", file_name);
+					free(cs->name);
+					free(cs);
+					free(line);
+					free(tokens);
+					fclose(fh);
+					return NULL;
+				}
+
+				// Copy the description buffer data
+				strcpy(cs->description, line);
+
+				// Reset line data for the next line
+				line_length = 0;
+				line_number++;
+
+				// break out of this loop to start reading cards
+				break;
+			}
+		}
+		// Continue building the line
+		else
+		{
+			// Ensure there is enough space
+			if(line_length >= line_capacity)
+			{
+				line_capacity *= 2;
+				line = realloc(line, line_capacity);
+				if(line == NULL)
+				{
+					fprintf(stderr, "Failed to reallocate more memory for the line buffer while reading the contents of \"%s\". Failure on line number %hu.\n", file_name, line_number); 
+					if(cs->name != NULL)
+						free(cs->name);
+					free(line);
+					free(tokens);
+					free(cs);
+					fclose(fh);
+					return NULL;
+				}
+			}
+
+			// Add characters to the line
+			line[line_length] = c;
+			line_length++;
+		}
+	}
+
+	// Begin reading contents of CSV to store into card set
+	while(c != EOF)
+	{
+		c = fgetc(fh);
+
+		// Stop reading line and convert to a card when the end of the line is reached.
+		if(c == '\n' || c == EOF)
+		{
+			// Cut off the line
+			line[line_length] = '\0';
+			line_length++;
+
+			// Tokenize the line
+			get_tokens(line, ",", &tokens, &tokens_length, &tokens_capacity);
+
+			// DEBUGGING
+			printf("for line %hu:\n", line_number);
+			for(byte i = 0; i < tokens_length; i++)
+				printf("%s ", tokens[i]);
+			printf("\n");
+
+			// Analyze the tokens --- Create a card from the tokens
+			if(tokens_length <= 0)
+				break;
+
+			struct card *new_card = card_create_with_array(tokens, tokens_length);
+			if(new_card == NULL)
+			{
+				fprintf(stderr, "Failed to create a new card using the tokens found while reading file \"%s\".\n", file_name);
+				card_set_destroy(cs);
+				free(line);
+				for(byte i = 0; i < tokens_length; i++)
+					free(tokens[i]); 
+				free(tokens);
+				fclose(fh);
+				return NULL;
+			}
+
+			// Add card to the card set
+			bool add_status = false;
+			if(tokens_length > 0)
+				add_status = card_set_add_card(cs, new_card);
+
+			if(add_status != true)
+				fprintf(stderr, "Failed to add card #%hu while reading file \"%s\".\n", line_number - 2, file_name);
+
+			// Increase line number and reset the line for the next reading
+			line_length = 0;
+			line_number++;
+
+			// Reset the tokens buffer
+			tokens_length = 0;
+		}
+		else
+		{
+			// Ensure there is enough space
+			if(line_length >= line_capacity)
+			{
+				line_capacity *= 2;
+				line = realloc(line, line_capacity);
+				if(line == NULL)
+				{
+					fprintf(stderr, "Failed to reallocate more memory for the line buffer while reading the contents of \"%s\". Failure on line number %hu.\n", file_name, line_number); 
+					card_set_destroy(cs);
+					free(line);
+					for(byte i = 0; i < tokens_length; i++)
+						free(tokens[i]);
+					free(tokens);
+					fclose(fh);
+					return NULL;
+				}
+			}
+
+			// Add characters to the line
+			line[line_length] = c;
+			line_length++;
+		}
+	}
+
+	// Return the card set that was created
+	return cs;
+}
+
 void card_set_print(struct card_set *cs)
 {
 	if(cs == NULL)
@@ -443,4 +762,83 @@ void card_set_print(struct card_set *cs)
 		printf("\n");
 	}
 	return;
+}
+
+// Returns the amount of prompts answered correctly (incorrect amount can then be deduced)
+unsigned short card_set_play(struct card_set *cs)
+{
+	// Setup for user input
+	char *input_buffer = malloc(25);
+	char input_c;
+	size_t input_buffer_length = 0;
+	size_t input_buffer_capacity = 25;
+
+	// Statistics
+	unsigned short correct_counter = 0;		// number of correctly answered
+	unsigned short *correct_prompts = malloc(sizeof(unsigned short) * (cs->length)); // particular prompts answered correctly. Just assume the user gets them all right, then no extra allocation has to be done.
+	if(correct_prompts == NULL)
+	{
+		fprintf(stderr, "Failed to allocate buffer to keep track of which prompts were answered correctly.\n");
+		return -1;
+	}
+	
+	for(unsigned short i = 0; i < cs->length; i++)
+	{
+		// Reset input buffer length
+		input_buffer_length = 0;
+		input_c = 1;
+
+		// Prompt the user with the question
+		printf("%s\n> ", cs->cards[i]->front);
+
+		// get user input
+		while(input_c != '\n')
+		{
+			// Get a character from stdin
+			input_c = getc(stdin);
+
+			// Make sure buffer is big enough to append it
+			if(input_buffer_length >= input_buffer_capacity)
+			{
+				input_buffer_capacity *= 2;
+				input_buffer = realloc(input_buffer, input_buffer_capacity);
+				if(input_buffer == NULL)
+				{
+					fprintf(stderr, "Failed to allocate extra memory for the input buffer.\n");
+					return -1;
+				}
+			}
+			if(input_c == '\n')
+				continue;
+			
+			input_buffer[input_buffer_length] = input_c;
+			input_buffer_length++;
+		}
+		input_buffer[input_buffer_length] = '\0';
+		input_buffer_length++;
+
+		// Validate answer
+		if(card_validate_answer(cs->cards[i], input_buffer))
+		{
+			printf("[CORRECT!]\n");
+			correct_prompts[correct_counter] = i;
+			correct_counter++;
+		}
+		else
+			printf("[INCORRECT!]\n");
+	
+	}
+	// Review user's performance
+	printf("\nRECAP:\nYou answered %hu prompts correctly!\n", correct_counter);
+	printf("You answered the following prompts correctly: %hu", correct_prompts[0]);
+	for(unsigned short i = 1; i < correct_counter; i++)
+		printf(", %hu", i);
+
+	printf("\n");
+
+	// Cleanup
+	free(input_buffer);
+	free(correct_prompts);
+
+	return correct_counter;
 }
