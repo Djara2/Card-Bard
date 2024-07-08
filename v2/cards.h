@@ -38,6 +38,8 @@ bool card_set_add(struct card_set *cs, char *front, char *back, byte va_list_len
 
 bool card_set_add_card(struct card_set *cs, struct card *c);
 
+void slice_string(char *str, unsigned short left_offset, unsigned short right_offset);
+
 void get_tokens(char *str, char *delimiter, char ***tokens, byte *tokens_length, byte *tokens_capacity);
 
 struct card_set* card_set_create_from_csv(char *file_name);

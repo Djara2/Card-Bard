@@ -483,6 +483,59 @@ bool card_set_add_card(struct card_set *cs, struct card *c)
 	return true;
 }
 
+// Slices string in place ! Will change value of string ! Use a duplicate of the string to avoid alteration.
+void slice_string(char *str, unsigned short left_offset, unsigned short right_offset)
+{
+	// String cannot be NULL.
+	if(str == NULL)
+		return;
+
+	// Slice offsets cannot be negative numbers 
+	if(left_offset < 0 || right_offset < 0)
+	{
+		fprintf(stderr, "slice_string: Cannot have left or right offset be a negative number (args: str: \"%s\", left: %hu, right: %hu)\n", str, left_offset, right_offset);
+		return;
+	}
+
+	// Length of string cannot be 0 or less
+	unsigned short source_length = strlen(str);
+	if(source_length <= 0)
+	{
+		fprintf(stderr, "slice_string: Cannot slice a string with length 0.\n");
+	}
+
+	// Left offset cannot be greater than length of string
+	if(left_offset >= source_length)
+	{
+		fprintf(stderr, "slice_string: Left offset cannot be larger than the length of the string (args: str: \"%s\", left: %hu, right: %hu)\n", str, left_offset, right_offset);
+		return;
+	}
+
+	// Right offset cannot be greater than length of string
+	if(right_offset >= source_length)
+	{
+		fprintf(stderr, "slice_string: Right offset cannot be larger than the length of the string (args: str: \"%s\", left: %hu, right: %hu)\n", str, left_offset, right_offset);
+		return;
+	}
+
+	// Offsets cannot remove too many characters
+	unsigned short new_length = source_length - (left_offset + right_offset);
+	if(new_length <= 0)
+	{
+		fprintf(stderr, "slice_string: Left and right offsets cannot remove more characters than exist within the source string. (args: str; \"%s\", left: %hu, right: %hu)\n", str, left_offset, right_offset);
+	}
+
+	// Modify string in place
+	for(unsigned short i = 0; i < new_length; i++)
+		str[i] = str[left_offset + i];
+
+	str[new_length] = '\0';		// null terminate string
+	return;
+}
+
+/* This will REMOVE leading whitespace so that you can write CSVs like 
+ * 1 term, answer, answer 2, answer 3, ...
+*/
 void get_tokens(char *str, char *delimiter, char ***tokens, byte *tokens_length, byte *tokens_capacity)
 {
 	char *token;
@@ -499,6 +552,18 @@ void get_tokens(char *str, char *delimiter, char ***tokens, byte *tokens_length,
 				fprintf(stderr, "Failed to reallocate the tokens buffer to accomodate more tokens.\n");
 				return;
 			}
+		}
+
+		// Remove leading whitespace from the token
+		unsigned short offset = 0;
+		while(token[offset] == ' ')
+			offset++;
+
+		if(offset > 0)
+		{
+			printf("Turned \"%s\" into ", token);
+			slice_string(token, offset, 0);
+			printf("\"%s\"\n", token);	
 		}
 
 		// Copy the token into the tokens buffer
@@ -789,7 +854,7 @@ unsigned short card_set_play(struct card_set *cs)
 		input_c = 1;
 
 		// Prompt the user with the question
-		printf("%s\n> ", cs->cards[i]->front);
+		printf("(%hu/%hu) %s\n> ", i + 1, cs->length, cs->cards[i]->front);
 
 		// get user input
 		while(input_c != '\n')
@@ -820,12 +885,12 @@ unsigned short card_set_play(struct card_set *cs)
 		// Validate answer
 		if(card_validate_answer(cs->cards[i], input_buffer))
 		{
-			printf("[CORRECT!]\n");
+			printf("[CORRECT!]\n\n");
 			correct_prompts[correct_counter] = i;
 			correct_counter++;
 		}
 		else
-			printf("[INCORRECT!]\n");
+			printf("[INCORRECT!]\n\n");
 	
 	}
 	// Review user's performance
