@@ -1,5 +1,7 @@
 #include <stdbool.h>
 #define byte unsigned char
+#ifndef CARDS_H
+#define CARDS_H
 
 struct card
 {
@@ -49,3 +51,5 @@ void card_set_print(struct card_set *cs);
 unsigned short card_set_play(struct card_set *cs);
 
 unsigned short card_set_play_random(struct card_set *cs);
+
+#endif

@@ -7,7 +7,8 @@ def compile_cards():
 
 def compile_player(): 
     system("gcc -c cards.c -o cards.o")
-    system("gcc player.c cards.o -o player")
+    system("gcc -c player_tools.c -o player_tools.o")
+    system("gcc player.c cards.o player_tools.o -o player")
 
 def compile_all():
     compile_player() # handles compilation of cards as well
