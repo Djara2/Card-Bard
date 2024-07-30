@@ -841,11 +841,11 @@ unsigned short card_set_play(struct card_set *cs)
 	size_t input_buffer_capacity = 25;
 
 	// Statistics
-	unsigned short correct_counter = 0;		// number of correctly answered
-	unsigned short *correct_prompts = malloc(sizeof(unsigned short) * (cs->length)); // particular prompts answered correctly. Just assume the user gets them all right, then no extra allocation has to be done.
-	if(correct_prompts == NULL)
+	unsigned short incorrect_counter = 0;		// number of correctly answered
+	unsigned short *incorrect_prompts = malloc(sizeof(unsigned short) * (cs->length)); // particular prompts answered incorrectly. Just assume the user gets them all wrong, then no extra allocation has to be done.
+	if(incorrect_prompts == NULL)
 	{
-		fprintf(stderr, "Failed to allocate buffer to keep track of which prompts were answered correctly.\n");
+		fprintf(stderr, "Failed to allocate buffer to keep track of which prompts were answered incorrectly.\n");
 		return -1;
 	}
 	
@@ -886,11 +886,7 @@ unsigned short card_set_play(struct card_set *cs)
 
 		// Validate answer
 		if(card_validate_answer(cs->cards[i], input_buffer))
-		{
 			printf("[CORRECT!]\n\n");
-			correct_prompts[correct_counter] = i;
-			correct_counter++;
-		}
 		else
 		{
 			printf("[INCORRECT!]\n\n");
@@ -905,23 +901,61 @@ unsigned short card_set_play(struct card_set *cs)
 				for(byte j = 0; j < cs->cards[i]->alternate_answers_length; j++)
 					printf("\t%d. %s\n", j+2, cs->cards[i]->alternate_answers[j]);
 			}
+
+			// Ask the user if they want to override the incorrect labeling.
+			printf("\nOverride incorrect marker? [y/n]\n> ");
+
+			// Get user input
+			input_c = 1;
+			input_buffer_length = 0;
+			while(input_c != '\n')
+			{
+				// Get a character from stdin
+				input_c = getc(stdin);
+
+				// Make sure buffer is big enough to append it
+				if(input_buffer_length >= input_buffer_capacity)
+				{
+					input_buffer_capacity *= 2;
+					input_buffer = realloc(input_buffer, input_buffer_capacity);
+					if(input_buffer == NULL)
+					{
+						fprintf(stderr, "Failed to allocate extra memory for the input buffer.\n");
+						return -1;
+					}
+				}
+				if(input_c == '\n')
+					continue;
+				
+				input_buffer[input_buffer_length] = input_c;
+				input_buffer_length++;
+			}
+			input_buffer[input_buffer_length] = '\0';
+			input_buffer_length++;
+
+			if(input_buffer[0] == 'n')
+			{
+				incorrect_prompts[incorrect_counter] = i;
+				incorrect_counter++;
+			}
+
 			printf("\n\n");
 		}
 	
 	}
 	// Review user's performance
-	printf("\nRECAP:\nYou answered %hu prompts correctly!\n", correct_counter);
-	printf("You answered the following prompts correctly: %hu", correct_prompts[0]);
-	for(unsigned short i = 1; i < correct_counter; i++)
+	printf("\nRECAP:\nYou answered %hu prompts correctly!\n", cs->length - incorrect_counter);
+	printf("You answered the following prompts INCORRECTLY: %hu", incorrect_prompts[0]);
+	for(unsigned short i = 1; i < incorrect_counter; i++)
 		printf(", %hu", i);
 
 	printf("\n");
 
 	// Cleanup
 	free(input_buffer);
-	free(correct_prompts);
+	free(incorrect_prompts);
 
-	return correct_counter;
+	return incorrect_counter;
 }
 
 // Returns the amount of prompts answered correctly (incorrect amount can then be deduced)

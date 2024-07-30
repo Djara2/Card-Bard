@@ -11,16 +11,15 @@
 4. Write a card set to a CSV
 5. Application for modifying/creating card sets (in case the user does not want to use the text editor to modify the CSV for some reason).
 6. GUI version
-7. Option to override erroneous input (e.g. answer is "google" but "gooogle" was entered).
-8. Change performance overview to review answers that were answered INCORRECTLY instead of correctly. This makes it so the user knows what they need to review. Also, if indices of incorrectly answer prompts are saved, then a review set or replay can automatically be generated.
-9. Add option to revisit ONLY the prompts that were answered INCORRECTLY at the end of a playthrough.
-
+7. Add option to revisit ONLY the prompts that were answered INCORRECTLY at the end of a playthrough.
 
 # Done
 
 ## July 30 2024
 
 1. Reveal the correct answer on failure
+2. Option to override erroneous input (e.g. answer is "google" but "gooogle" was entered).
+3. Change performance overview to review answers that were answered INCORRECTLY instead of correctly. This makes it so the user knows what they need to review. Also, if indices of incorrectly answer prompts are saved, then a review set or replay can automatically be generated.
 
 ## Early July 2024
 
