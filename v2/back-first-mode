@@ -1,0 +1,19 @@
+backside of card 1, add card to revisit buffer
+backside of card 2, add card to revisit buffer
+backside of card 3, no alternate answers, so do not add to revisit buffer
+.
+.
+.
+all cards visited
+
+alternate answer of card 1 in revisit buffer, keep in revisit buffer (card 1 has more alternate answers)
+alternate answer of card 2 in revisit buffer, remove from revisit buffer (card 2 does not have more alternate answers)
+.
+.
+.
+done when no cards in the revisit buffer have alternate answers
+
+keep a round counter to know which alternate answers buffer index to be checking
+if the size of the alternate answers buffer is smaller than the round counter, it can be skipped
+
+-> now the revisit buffer is not even needed

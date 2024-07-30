@@ -892,7 +892,21 @@ unsigned short card_set_play(struct card_set *cs)
 			correct_counter++;
 		}
 		else
+		{
 			printf("[INCORRECT!]\n\n");
+
+			// Show the user what the correct input was. 
+			if(cs->cards[i]->alternate_answers_length == 0)
+				printf("The correct answer was \"%s\"", cs->cards[i]->back);
+			else
+			{
+				printf("The acceptable answers are:\n");
+				printf("\t1. %s\n", cs->cards[i]->back);
+				for(byte j = 0; j < cs->cards[i]->alternate_answers_length; j++)
+					printf("\t%d. %s\n", j+2, cs->cards[i]->alternate_answers[j]);
+			}
+			printf("\n\n");
+		}
 	
 	}
 	// Review user's performance
