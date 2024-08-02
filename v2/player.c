@@ -93,13 +93,16 @@ int main(int argc, char **argv)
 			while(continue_looping)
 			{
 				incorrect_count = card_set_play_indices(cs, incorrect_prompts, incorrect_count, incorrect_prompts);
+
+				// If no more prompts to review, stop practice loop.
+				if(incorrect_count == 0)
+					break;
+
 				// Prompt user to revisit the prompts they answered incorrectly
 				printf("You answered %hu prompts incorrectly. Revisit those prompts?\n> ", incorrect_count);
 				get_input(&player_input_buffer, &player_input_buffer_length, &player_input_buffer_capacity);
 				if(player_input_buffer[0] == 'n')
 					continue_looping = false;
-
-				printf("[DEBUGGING] accepted user input.\n");
 			}
 
 			// Go to exit application procedure.

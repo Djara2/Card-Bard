@@ -11,10 +11,17 @@
 4. Write a card set to a CSV
 5. Application for modifying/creating card sets (in case the user does not want to use the text editor to modify the CSV for some reason).
 6. GUI version
-7. Add option to revisit ONLY the prompts that were answered INCORRECTLY at the end of a playthrough.
-8. Update normal random mode to reflect July 30th updates.
+7. Update normal random mode to reflect July 30th updates.
+8. Create statistics file, keeping track of the following pieces of information about each individual prompt
+	1. The amount of times it is answered correctly
+	2. The amount of times it is answered incorrectly
+	3. The amount of times it is overridden
 
 # Done
+
+## August 2nd, 2024
+
+1. Add option to revisit ONLY the prompts that were answered INCORRECTLY at the end of a playthrough.
 
 ## July 30 2024
 

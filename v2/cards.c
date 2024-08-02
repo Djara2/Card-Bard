@@ -942,10 +942,10 @@ unsigned short card_set_play(struct card_set *cs, unsigned short *incorrect_prom
 	
 	}
 	// Review user's performance
-	printf("\nRECAP:\nYou answered %hu prompts correctly!\n", cs->length - incorrect_counter);
-	printf("You answered the following prompts INCORRECTLY [%hu total]: %hu", incorrect_counter, incorrect_prompts[0]);
+	printf("RECAP:\nYou answered %hu prompts correctly!\n", cs->length - incorrect_counter);
+	printf("You answered the following prompts INCORRECTLY [%hu total]: %hu", incorrect_counter, incorrect_prompts[0] + 1); // +1 because the system is keeping track of indices; however, this information is presented to a human, who starts counting at 1.
 	for(unsigned short i = 1; i < incorrect_counter; i++)
-		printf(", %hu", incorrect_prompts[i]);
+		printf(", %hu", incorrect_prompts[i] + 1);
 
 	printf("\n");
 
@@ -1065,20 +1065,22 @@ unsigned short card_set_play_indices(struct card_set *cs, unsigned short *indice
 			}
 
 			printf("\n\n");
-		}
-	
+		}	
 	}
+
 	// Review user's performance
 	printf("\nRECAP:\nYou answered %hu prompts correctly!\n", cs->length - incorrect_counter);
-	printf("You answered the following prompts INCORRECTLY: %hu", incorrect_prompts[0]);
-	for(unsigned short i = 1; i < incorrect_counter; i++)
-		printf(", %hu", i);
+	if(incorrect_counter != 0)
+	{
+		printf("You answered the following prompts INCORRECTLY: %hu", incorrect_prompts[0] + 1); // +1 because system uses indices internally; however, this information is presented to a human who starts counting at 1.
+		for(unsigned short i = 1; i < incorrect_counter; i++)
+			printf(", %hu", i + 1);
 
-	printf("\n");
+		printf("\n");
+	}
 
 	// Cleanup
 	free(input_buffer);
-	free(incorrect_prompts);
 
 	return incorrect_counter;
 }
