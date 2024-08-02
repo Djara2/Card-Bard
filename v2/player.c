@@ -48,17 +48,66 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	unsigned short correct;
+	// Create buffer for accepting user input for PLAYER APPLICATION
+	// (functions from cards.h will create their own buffers)
+	char *player_input_buffer = malloc(sizeof(char) * 25);
+	if(player_input_buffer == NULL)
+	{
+		fprintf(stderr, "Failed to allocate initial 25 bytes for player application input buffer. Note taht this buffer is different from the one used by the card_set_play function in cards.h).\n");
+		card_set_destroy(cs);
+		return 1;
+	}
+	size_t player_input_buffer_length = 0;
+	size_t player_input_buffer_capacity = 25;
+
+	// Create buffer for tracking prompts answered incorrectly.
+	unsigned short incorrect_count;
+	unsigned short *incorrect_prompts = malloc(sizeof(unsigned short) * cs->length);
+	if(incorrect_prompts == NULL)
+	{
+		fprintf(stderr, "Failed to allocate memory for buffer keeping track of prompts answered incorrectly.\n");
+		card_set_destroy(cs);
+		free(player_input_buffer);
+		return 1;
+	}
+
+	// Data for continuously prompting user to retry on prompts they
+	// answered incorrectly
+	bool continue_looping = true;
+ 
 	switch(mode)
 	{
 		case REGULAR:
 			printf("Playing in regular mode.\n");
-			correct = card_set_play(cs); 
+			incorrect_count = card_set_play(cs, incorrect_prompts);
+			if(incorrect_count == 0)
+				break;
+
+			// Prompt user to revisit the prompts they answered incorrectly
+			printf("You answered %hu prompts incorrectly. Revisit those prompts?\n> ", incorrect_count);
+			get_input(&player_input_buffer, &player_input_buffer_length, &player_input_buffer_capacity);
+			if(player_input_buffer[0] == 'n')
+				break;
+			
+			// Start a new playthrough, reviewing only	
+			while(continue_looping)
+			{
+				incorrect_count = card_set_play_indices(cs, incorrect_prompts, incorrect_count, incorrect_prompts);
+				// Prompt user to revisit the prompts they answered incorrectly
+				printf("You answered %hu prompts incorrectly. Revisit those prompts?\n> ", incorrect_count);
+				get_input(&player_input_buffer, &player_input_buffer_length, &player_input_buffer_capacity);
+				if(player_input_buffer[0] == 'n')
+					continue_looping = false;
+
+				printf("[DEBUGGING] accepted user input.\n");
+			}
+
+			// Go to exit application procedure.
 			break;
 
 		case REGULAR_RANDOM:
 			printf("Playing in regular random mode.\n");
-			correct = card_set_play_random(cs);
+			incorrect_count = card_set_play_random(cs);
 			break;
 		
 		case BACK_FIRST:
@@ -72,13 +121,14 @@ int main(int argc, char **argv)
 			break;
 
 		default:
-			correct = card_set_play(cs);
+			incorrect_count = card_set_play(cs, incorrect_prompts);
 			break;
 	}
 
-	if(correct >= ((3/4) * cs->length)) 
+	if(incorrect_count < ((3/4) * cs->length)) 
 		printf("You did well!\n");
 
-	free(cs);
+	card_set_destroy(cs);
+	free(player_input_buffer);
 	return 0;
 }

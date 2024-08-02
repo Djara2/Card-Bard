@@ -110,6 +110,39 @@ void set_mode(enum MODES *m, byte *bits)
 	}
 }
 
+void get_input(char **input_buffer, size_t *input_buffer_length, size_t *input_buffer_capacity)
+{
+	// Reset input buffer length
+	(*input_buffer_length) = 0;
+	char input_c = 1;
+
+	// get user input
+	while(input_c != '\n')
+	{
+		// Get a character from stdin
+		input_c = getc(stdin);
+
+		// Make sure buffer is big enough to append it
+		if( (*input_buffer_length) >= (*input_buffer_capacity) )
+		{
+			(*input_buffer_capacity) *= 2;
+			(*input_buffer) = realloc( (*input_buffer), (*input_buffer_capacity) );
+			if((*input_buffer) == NULL)
+			{
+				fprintf(stderr, "Failed to allocate extra memory for the input buffer.\n");
+				return;
+			}
+		}
+		if(input_c == '\n')
+			continue;
+		
+		(*input_buffer)[(*input_buffer_length)] = input_c;
+		(*input_buffer_length)++;
+	}
+	(*input_buffer)[(*input_buffer_length)] = '\0';
+	(*input_buffer_length)++;
+}
+
 void print_help(void)
 {
 	FILE *help_file = fopen("help.txt", "r");

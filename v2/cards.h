@@ -48,7 +48,9 @@ struct card_set* card_set_create_from_csv(char *file_name);
 
 void card_set_print(struct card_set *cs);
 
-unsigned short card_set_play(struct card_set *cs);
+unsigned short card_set_play(struct card_set *cs, unsigned short *incorrect_prompts);
+
+unsigned short card_set_play_indices(struct card_set *cs, unsigned short *indices, unsigned short indices_length, unsigned short *incorrect_prompts);
 
 unsigned short card_set_play_random(struct card_set *cs);
 

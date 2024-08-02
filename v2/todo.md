@@ -12,6 +12,7 @@
 5. Application for modifying/creating card sets (in case the user does not want to use the text editor to modify the CSV for some reason).
 6. GUI version
 7. Add option to revisit ONLY the prompts that were answered INCORRECTLY at the end of a playthrough.
+8. Update normal random mode to reflect July 30th updates.
 
 # Done
 
