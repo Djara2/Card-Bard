@@ -1,6 +1,5 @@
 #!/bin/bash
-if [ "$1" = "cards" ]; then
-	gcc -c cards.c -o cards.o
-else
-	gcc "$1.c" cards.o -o "$1"
-fi
+gcc -c src/cards.c -o cards.o
+gcc -c src/player_tools.c -o player_tools.o
+ar rcs libcardboard.a cards.o player_tools.o
+gcc player.c -L. -lcardboard -o player

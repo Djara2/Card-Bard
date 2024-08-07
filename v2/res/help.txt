@@ -1,0 +1,24 @@
+Usage: player [OPTION]... [FILE]...
+Study FILE in a study mode controlled by OPTION(s)
+
+With no OPTION(s), study cards in linear order, answering based on the back of the cards.
+
+  -n,  --normal, --regular	study regularly. Equivalent to no OPTION(s)
+  -b,  --backfirst          	study in linear order, but use the front of the cards for the answers
+  -r,  --random                 study in random order
+  -nr, --normal --random	equivalent to -r
+  -i,  --input			explicitly specify the next OPTION is the input file to use
+  				if not used, the input file is any argument not starting with a hypen
+  -h,  --help     		display this help and exit
+  -v,  --version  		output version information and exit
+
+Examples:
+  player data.csv  		Study data.csv in regular mode.
+  player data.csv -r    	Study data.csv in regular random mode.
+  player -i data.csv    	Study data.csv in regular mode.
+  player -i data.csv -r 	Study data.csv in regular random mode.
+  player -i data.csv -rb        Study data.csv in back first random mode.
+
+Card Bard online help: <???>
+Full documentation <???>
+or available locally via: documentation directory
